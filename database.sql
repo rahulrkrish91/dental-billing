@@ -1,0 +1,31 @@
+CREATE DATABASE IF NOT EXISTS dental_billing;
+USE dental_billing;
+
+CREATE TABLE IF NOT EXISTS Patients (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  phone_number VARCHAR(20) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS Invoices (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  patient_id INT NOT NULL,
+  total_amount DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_invoices_patient
+    FOREIGN KEY (patient_id) REFERENCES Patients(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS Invoice_Items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  invoice_id INT NOT NULL,
+  treatment_name VARCHAR(255) NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  CONSTRAINT fk_items_invoice
+    FOREIGN KEY (invoice_id) REFERENCES Invoices(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
