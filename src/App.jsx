@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const API_BASE = 'http://localhost:5000';
+const LOGO_SRC = '/images/logo.png';
 const initialTreatments = [{ treatmentName: '', amount: '' }];
 const expenseCategories = ['Rent', 'Assistant Salary', 'IMAGE IMA Fees', 'Purchase Items', 'Other'];
 
@@ -13,7 +14,7 @@ const styles = {
     color: '#1e293b',
   },
   card: {
-    maxWidth: 1000,
+    maxWidth: 1100,
     margin: '0 auto',
     background: '#ffffff',
     borderRadius: 18,
@@ -21,7 +22,22 @@ const styles = {
     padding: 28,
     border: '1px solid #e2e8f0',
   },
-  tabRow: { display: 'flex', gap: 10, marginBottom: 22 },
+  headerBrand: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  headerLogo: {
+    width: 54,
+    height: 54,
+    borderRadius: 12,
+    objectFit: 'contain',
+    background: '#0f172a',
+    border: '1px solid #334155',
+    padding: 4,
+  },
+  tabRow: { display: 'flex', gap: 10, marginBottom: 22, flexWrap: 'wrap' },
   tabBtn: {
     background: '#f8fafc',
     border: '1px solid #cbd5e1',
@@ -55,6 +71,13 @@ const styles = {
     colorScheme: 'light',
   },
   sectionTitle: { fontSize: 17, marginTop: 24, marginBottom: 10 },
+  treatmentCard: {
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 10,
+  },
   treatmentRow: {
     display: 'grid',
     gridTemplateColumns: '1.8fr 1fr auto',
@@ -94,7 +117,7 @@ const styles = {
   total: {
     marginTop: 14,
     padding: 14,
-    background: '#f8fafc',
+    background: '#ffffff',
     border: '1px solid #e2e8f0',
     borderRadius: 12,
     textAlign: 'right',
@@ -129,11 +152,7 @@ const styles = {
     fontWeight: 700,
     cursor: 'pointer',
   },
-  expenseGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 14,
-  },
+  expenseGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 },
   expenseSummary: {
     margin: '16px 0',
     background: '#ecfeff',
@@ -159,23 +178,56 @@ const styles = {
     borderBottom: '1px solid #e2e8f0',
     background: '#f8fafc',
   },
-  td: {
-    padding: '10px 8px',
-    fontSize: 14,
-    borderBottom: '1px solid #f1f5f9',
-  },
+  td: { padding: '10px 8px', fontSize: 14, borderBottom: '1px solid #f1f5f9' },
+  kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(180px, 1fr))', gap: 12, marginBottom: 16 },
+  kpiCard: { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14 },
+  kpiLabel: { color: '#64748b', fontSize: 12, marginBottom: 6 },
+  kpiValue: { color: '#0f172a', fontSize: 24, fontWeight: 700 },
+  chartGrid: { display: 'grid', gridTemplateColumns: '1fr', gap: 14 },
+  chartCard: { background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14 },
+  chartTitle: { margin: '0 0 10px', fontSize: 16, color: '#0f172a' },
+  chartRow: { display: 'grid', gridTemplateColumns: '90px 1fr 90px', gap: 10, alignItems: 'center', marginBottom: 8 },
+  chartTrack: { width: '100%', background: '#e2e8f0', borderRadius: 999, height: 10, overflow: 'hidden' },
+  chartFill: { height: '100%', background: '#0284c7', borderRadius: 999 },
 };
 
 const formatINR = (value) =>
-  `₹ ${Number(value || 0).toLocaleString('en-IN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })}`;
+  `₹ ${Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
 const getToday = () => new Date().toISOString().slice(0, 10);
 
+const formatMonth = (monthKey) => {
+  const [y, m] = monthKey.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleString('en-IN', { month: 'short', year: '2-digit' });
+};
+
+function MiniBarChart({ title, data, valueKey, formatter }) {
+  const max = Math.max(...data.map((item) => Number(item[valueKey] || 0)), 1);
+
+  return (
+    <div style={styles.chartCard}>
+      <h3 style={styles.chartTitle}>{title}</h3>
+      {!data.length && <p style={styles.subtitle}>No data available yet.</p>}
+      {data.map((item) => {
+        const value = Number(item[valueKey] || 0);
+        const width = `${Math.max((value / max) * 100, value > 0 ? 6 : 0)}%`;
+        return (
+          <div style={styles.chartRow} key={`${title}-${item.month}`}>
+            <span>{formatMonth(item.month)}</span>
+            <div style={styles.chartTrack}>
+              <div style={{ ...styles.chartFill, width }} />
+            </div>
+            <strong style={{ textAlign: 'right' }}>{formatter(value)}</strong>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function App() {
-  const [activeTab, setActiveTab] = useState('billing');
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [logoVisible, setLogoVisible] = useState(true);
 
   const [patientName, setPatientName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -190,6 +242,10 @@ function App() {
   const [expenseLoading, setExpenseLoading] = useState(false);
   const [expenseList, setExpenseList] = useState([]);
   const [expenseTotal, setExpenseTotal] = useState(0);
+
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardSeries, setDashboardSeries] = useState([]);
+  const [dashboardTotals, setDashboardTotals] = useState({ revenue: 0, invoicesSent: 0, repeatingCustomers: 0 });
 
   const total = useMemo(
     () => treatments.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0),
@@ -208,10 +264,24 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    if (activeTab === 'expenses') {
-      fetchExpenses();
+  const fetchDashboard = async () => {
+    setDashboardLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/dashboard?months=6`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Could not fetch dashboard data');
+      setDashboardSeries(data.series || []);
+      setDashboardTotals(data.totals || { revenue: 0, invoicesSent: 0, repeatingCustomers: 0 });
+    } catch (error) {
+      alert(`Could not load dashboard. Check backend/MySQL.\n\nError: ${error.message}`);
+    } finally {
+      setDashboardLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'expenses') fetchExpenses();
+    if (activeTab === 'dashboard') fetchDashboard();
   }, [activeTab]);
 
   const updateTreatment = (index, key, value) => {
@@ -221,10 +291,7 @@ function App() {
   const addRow = () => setTreatments((prev) => [...prev, { treatmentName: '', amount: '' }]);
 
   const deleteRow = (index) => {
-    setTreatments((prev) => {
-      if (prev.length === 1) return prev;
-      return prev.filter((_, i) => i !== index);
-    });
+    setTreatments((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
   };
 
   const resetBillingForm = () => {
@@ -263,6 +330,7 @@ function App() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Unable to generate bill');
       setPdfUrl(data.pdfUrl);
+      fetchDashboard();
     } catch (error) {
       alert(
         `Unable to generate invoice. Please confirm backend server and MySQL are running.\n\nError: ${error.message}`,
@@ -315,7 +383,22 @@ function App() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
+        <div style={styles.headerBrand}>
+          {logoVisible && <img src={LOGO_SRC} alt="Vamis Dental Care" style={styles.headerLogo} onError={() => setLogoVisible(false)} />}
+          <div>
+            <h1 style={{ ...styles.title, fontSize: 22 }}>Vamis Dental Care</h1>
+            <p style={{ ...styles.subtitle, margin: '4px 0 0' }}>Billing, Expenses & Analytics Dashboard</p>
+          </div>
+        </div>
+
         <div style={styles.tabRow}>
+          <button
+            type="button"
+            style={{ ...styles.tabBtn, ...(activeTab === 'dashboard' ? styles.tabBtnActive : {}) }}
+            onClick={() => setActiveTab('dashboard')}
+          >
+            Dashboard
+          </button>
           <button
             type="button"
             style={{ ...styles.tabBtn, ...(activeTab === 'billing' ? styles.tabBtnActive : {}) }}
@@ -332,14 +415,59 @@ function App() {
           </button>
         </div>
 
+        {activeTab === 'dashboard' && (
+          <>
+            <h2 style={styles.previewHeader}>Dashboard Analytics</h2>
+            <p style={styles.subtitle}>Graph view for amount received, repeating customers, and invoices sent.</p>
+
+            <div style={styles.kpiGrid}>
+              <div style={styles.kpiCard}>
+                <div style={styles.kpiLabel}>Amount Received (6 months)</div>
+                <div style={styles.kpiValue}>{formatINR(dashboardTotals.revenue)}</div>
+              </div>
+              <div style={styles.kpiCard}>
+                <div style={styles.kpiLabel}>Invoices Sent (6 months)</div>
+                <div style={styles.kpiValue}>{dashboardTotals.invoicesSent}</div>
+              </div>
+              <div style={styles.kpiCard}>
+                <div style={styles.kpiLabel}>Repeating Customers (6 months)</div>
+                <div style={styles.kpiValue}>{dashboardTotals.repeatingCustomers}</div>
+              </div>
+            </div>
+
+            {dashboardLoading ? (
+              <p style={styles.subtitle}>Loading charts...</p>
+            ) : (
+              <div style={styles.chartGrid}>
+                <MiniBarChart
+                  title="Monthly Amount Received"
+                  data={dashboardSeries}
+                  valueKey="revenue"
+                  formatter={formatINR}
+                />
+                <MiniBarChart
+                  title="Monthly Invoices Sent"
+                  data={dashboardSeries}
+                  valueKey="invoicesSent"
+                  formatter={(value) => value}
+                />
+                <MiniBarChart
+                  title="Monthly Repeating Customers"
+                  data={dashboardSeries}
+                  valueKey="repeatingCustomers"
+                  formatter={(value) => value}
+                />
+              </div>
+            )}
+          </>
+        )}
+
         {activeTab === 'billing' && (
           <>
             {!pdfUrl ? (
               <>
-                <h1 style={styles.title}>Dental Billing MVP</h1>
-                <p style={styles.subtitle}>
-                  Create a treatment invoice, preview PDF, and share via WhatsApp.
-                </p>
+                <h2 style={styles.previewHeader}>Dental Billing MVP</h2>
+                <p style={styles.subtitle}>Create a treatment invoice, preview PDF, and share via WhatsApp.</p>
 
                 <form onSubmit={submitInvoice}>
                   <div style={styles.row}>
@@ -365,42 +493,44 @@ function App() {
                     </div>
                   </div>
 
-                  <h3 style={styles.sectionTitle}>Treatments &amp; Services</h3>
+                  <div style={styles.treatmentCard}>
+                    <h3 style={{ ...styles.sectionTitle, marginTop: 0 }}>Treatments &amp; Services</h3>
 
-                  {treatments.map((item, index) => (
-                    <div key={index} style={styles.treatmentRow}>
-                      <input
-                        style={styles.input}
-                        placeholder="Treatment Name"
-                        value={item.treatmentName}
-                        onChange={(e) => updateTreatment(index, 'treatmentName', e.target.value)}
-                      />
-                      <input
-                        style={styles.input}
-                        placeholder="Amount"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.amount}
-                        onChange={(e) => updateTreatment(index, 'amount', e.target.value)}
-                      />
-                      <button
-                        style={styles.deleteBtn}
-                        type="button"
-                        onClick={() => deleteRow(index)}
-                        disabled={treatments.length === 1}
-                        title={treatments.length === 1 ? 'At least one row is required' : 'Delete row'}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  ))}
+                    {treatments.map((item, index) => (
+                      <div key={index} style={styles.treatmentRow}>
+                        <input
+                          style={styles.input}
+                          placeholder="Treatment Name"
+                          value={item.treatmentName}
+                          onChange={(e) => updateTreatment(index, 'treatmentName', e.target.value)}
+                        />
+                        <input
+                          style={styles.input}
+                          placeholder="Amount"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.amount}
+                          onChange={(e) => updateTreatment(index, 'amount', e.target.value)}
+                        />
+                        <button
+                          style={styles.deleteBtn}
+                          type="button"
+                          onClick={() => deleteRow(index)}
+                          disabled={treatments.length === 1}
+                          title={treatments.length === 1 ? 'At least one row is required' : 'Delete row'}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ))}
 
-                  <button type="button" style={styles.addBtn} onClick={addRow}>
-                    + Add Treatment
-                  </button>
+                    <button type="button" style={styles.addBtn} onClick={addRow}>
+                      + Add Treatment
+                    </button>
 
-                  <div style={styles.total}>Live Total: {formatINR(total)}</div>
+                    <div style={styles.total}>Live Total: {formatINR(total)}</div>
+                  </div>
 
                   <button style={styles.submitBtn} type="submit" disabled={loading}>
                     {loading ? 'Generating...' : 'Preview Invoice'}
@@ -426,7 +556,7 @@ function App() {
 
         {activeTab === 'expenses' && (
           <>
-            <h1 style={styles.title}>Clinic Expense Tracker</h1>
+            <h2 style={styles.previewHeader}>Clinic Expense Tracker</h2>
             <p style={styles.subtitle}>
               Track rent, assistant salary, IMAGE IMA fees, purchase items, and other expenses.
             </p>

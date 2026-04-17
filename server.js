@@ -76,7 +76,9 @@ const drawReceiptPdf = ({ invoiceId, patientName, phoneNumber, items, totalAmoun
   const top = doc.page.margins.top;
   const rightX = left + contentWidth;
 
-  const logoPath = path.join(__dirname, 'public', 'images', 'logo.jpg');
+  const logoPngPath = path.join(__dirname, 'public', 'images', 'logo.png');
+  const logoJpgPath = path.join(__dirname, 'public', 'images', 'logo.jpg');
+  const logoPath = fs.existsSync(logoPngPath) ? logoPngPath : logoJpgPath;
   const logoSize = 48;
 
   let y = top;
@@ -387,6 +389,88 @@ app.post('/api/expenses', async (req, res) => {
   } catch (error) {
     console.error('Create expense error:', error);
     return res.status(500).json({ message: 'Failed to save expense.' });
+  }
+});
+
+
+
+app.get('/api/dashboard', async (req, res) => {
+  const months = Math.min(Math.max(Number(req.query.months) || 6, 3), 24);
+
+  try {
+    const [monthlyRows] = await pool.execute(
+      `SELECT
+        DATE_FORMAT(created_at, '%Y-%m') AS month_key,
+        SUM(total_amount) AS revenue,
+        COUNT(*) AS invoices_sent,
+        COUNT(DISTINCT patient_id) AS unique_patients
+      FROM Invoices
+      WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+      GROUP BY month_key
+      ORDER BY month_key ASC`,
+      [months],
+    );
+
+    const [repeatingRows] = await pool.execute(
+      `SELECT
+        DATE_FORMAT(i.created_at, '%Y-%m') AS month_key,
+        COUNT(DISTINCT i.patient_id) AS repeating_customers
+      FROM Invoices i
+      WHERE i.created_at >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+        AND EXISTS (
+          SELECT 1
+          FROM Invoices prev
+          WHERE prev.patient_id = i.patient_id
+            AND prev.created_at < DATE_FORMAT(i.created_at, '%Y-%m-01')
+        )
+      GROUP BY month_key
+      ORDER BY month_key ASC`,
+      [months],
+    );
+
+    const monthMap = new Map();
+    monthlyRows.forEach((row) => {
+      monthMap.set(row.month_key, {
+        month: row.month_key,
+        revenue: Number(row.revenue || 0),
+        invoicesSent: Number(row.invoices_sent || 0),
+        repeatingCustomers: 0,
+      });
+    });
+
+    repeatingRows.forEach((row) => {
+      if (!monthMap.has(row.month_key)) {
+        monthMap.set(row.month_key, {
+          month: row.month_key,
+          revenue: 0,
+          invoicesSent: 0,
+          repeatingCustomers: Number(row.repeating_customers || 0),
+        });
+      } else {
+        monthMap.get(row.month_key).repeatingCustomers = Number(row.repeating_customers || 0);
+      }
+    });
+
+    const series = [...monthMap.values()];
+    const totals = series.reduce(
+      (acc, item) => {
+        acc.revenue += item.revenue;
+        acc.invoicesSent += item.invoicesSent;
+        acc.repeatingCustomers += item.repeatingCustomers;
+        return acc;
+      },
+      { revenue: 0, invoicesSent: 0, repeatingCustomers: 0 },
+    );
+
+    return res.json({
+      success: true,
+      months,
+      totals,
+      series,
+    });
+  } catch (error) {
+    console.error('Dashboard metrics error:', error);
+    return res.status(500).json({ message: 'Failed to fetch dashboard metrics.' });
   }
 });
 
