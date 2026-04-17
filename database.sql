@@ -29,3 +29,12 @@ CREATE TABLE IF NOT EXISTS Invoice_Items (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS Expenses (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  expense_date DATE NOT NULL,
+  category ENUM('Rent', 'Assistant Salary', 'IMAGE IMA Fees', 'Purchase Items', 'Other') NOT NULL,
+  description VARCHAR(255) NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

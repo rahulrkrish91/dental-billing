@@ -326,6 +326,70 @@ app.post('/api/generate-bill', async (req, res) => {
   }
 });
 
+
+
+app.get('/api/expenses', async (req, res) => {
+  const { from, to } = req.query;
+
+  try {
+    let query = 'SELECT id, expense_date, category, description, amount, created_at FROM Expenses';
+    const params = [];
+
+    if (from && to) {
+      query += ' WHERE expense_date BETWEEN ? AND ?';
+      params.push(from, to);
+    }
+
+    query += ' ORDER BY expense_date DESC, id DESC';
+
+    const [rows] = await pool.execute(query, params);
+    const totalAmount = rows.reduce((sum, row) => sum + Number(row.amount), 0);
+
+    return res.json({
+      success: true,
+      totalAmount,
+      count: rows.length,
+      expenses: rows,
+    });
+  } catch (error) {
+    console.error('Fetch expenses error:', error);
+    return res.status(500).json({ message: 'Failed to fetch expenses.' });
+  }
+});
+
+app.post('/api/expenses', async (req, res) => {
+  const { expenseDate, category, description, amount } = req.body;
+  const validCategories = ['Rent', 'Assistant Salary', 'IMAGE IMA Fees', 'Purchase Items', 'Other'];
+
+  if (!expenseDate || !category || !description || Number.isNaN(Number(amount))) {
+    return res.status(400).json({ message: 'expenseDate, category, description and amount are required.' });
+  }
+
+  if (!validCategories.includes(category)) {
+    return res.status(400).json({ message: 'Invalid expense category.' });
+  }
+
+  if (Number(amount) < 0) {
+    return res.status(400).json({ message: 'Amount cannot be negative.' });
+  }
+
+  try {
+    const [result] = await pool.execute(
+      'INSERT INTO Expenses (expense_date, category, description, amount) VALUES (?, ?, ?, ?)',
+      [expenseDate, category, description.trim(), Number(amount)],
+    );
+
+    return res.status(201).json({
+      success: true,
+      expenseId: result.insertId,
+      message: 'Expense saved successfully.',
+    });
+  } catch (error) {
+    console.error('Create expense error:', error);
+    return res.status(500).json({ message: 'Failed to save expense.' });
+  }
+});
+
 app.get('/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
