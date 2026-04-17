@@ -402,19 +402,20 @@ app.get('/api/dashboard', async (req, res) => {
 
   try {
     if (view === 'monthly') {
-      const months = Math.min(Math.max(Number(req.query.months) || 6, 3), 12);
+      const year = Number(req.query.year) || now.getFullYear();
+      const startDate = `${year}-01-01`;
+      const endDate = `${year}-12-31`;
 
       const [monthlyRows] = await pool.execute(
         `SELECT
           DATE_FORMAT(created_at, '%Y-%m') AS period_key,
           SUM(total_amount) AS revenue,
-          COUNT(*) AS invoices_sent,
-          COUNT(DISTINCT patient_id) AS unique_patients
+          COUNT(*) AS invoices_sent
         FROM Invoices
-        WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+        WHERE DATE(created_at) BETWEEN ? AND ?
         GROUP BY period_key
         ORDER BY period_key ASC`,
-        [months],
+        [startDate, endDate],
       );
 
       const [repeatingRows] = await pool.execute(
@@ -422,7 +423,7 @@ app.get('/api/dashboard', async (req, res) => {
           DATE_FORMAT(i.created_at, '%Y-%m') AS period_key,
           COUNT(DISTINCT i.patient_id) AS repeating_customers
         FROM Invoices i
-        WHERE i.created_at >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+        WHERE DATE(i.created_at) BETWEEN ? AND ?
           AND EXISTS (
             SELECT 1
             FROM Invoices prev
@@ -431,7 +432,7 @@ app.get('/api/dashboard', async (req, res) => {
           )
         GROUP BY period_key
         ORDER BY period_key ASC`,
-        [months],
+        [startDate, endDate],
       );
 
       const [detailRows] = await pool.execute(
@@ -443,33 +444,33 @@ app.get('/api/dashboard', async (req, res) => {
         FROM Invoices i
         JOIN Patients p ON p.id = i.patient_id
         LEFT JOIN Invoice_Items ii ON ii.invoice_id = i.id
-        WHERE i.created_at >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+        WHERE DATE(i.created_at) BETWEEN ? AND ?
         GROUP BY period_key, i.id, p.name
         ORDER BY i.created_at DESC`,
-        [months],
+        [startDate, endDate],
       );
 
       const periodMap = new Map();
-      monthlyRows.forEach((row) => {
-        periodMap.set(row.period_key, {
-          period: row.period_key,
-          revenue: Number(row.revenue || 0),
-          invoicesSent: Number(row.invoices_sent || 0),
+      for (let month = 1; month <= 12; month += 1) {
+        const periodKey = `${year}-${String(month).padStart(2, '0')}`;
+        periodMap.set(periodKey, {
+          period: periodKey,
+          revenue: 0,
+          invoicesSent: 0,
           repeatingCustomers: 0,
           details: [],
         });
+      }
+
+      monthlyRows.forEach((row) => {
+        if (periodMap.has(row.period_key)) {
+          periodMap.get(row.period_key).revenue = Number(row.revenue || 0);
+          periodMap.get(row.period_key).invoicesSent = Number(row.invoices_sent || 0);
+        }
       });
 
       repeatingRows.forEach((row) => {
-        if (!periodMap.has(row.period_key)) {
-          periodMap.set(row.period_key, {
-            period: row.period_key,
-            revenue: 0,
-            invoicesSent: 0,
-            repeatingCustomers: Number(row.repeating_customers || 0),
-            details: [],
-          });
-        } else {
+        if (periodMap.has(row.period_key)) {
           periodMap.get(row.period_key).repeatingCustomers = Number(row.repeating_customers || 0);
         }
       });
@@ -497,6 +498,7 @@ app.get('/api/dashboard', async (req, res) => {
       return res.json({
         success: true,
         view,
+        year,
         yAxisBaseMax: 2000,
         totals,
         series,

@@ -6,176 +6,34 @@ const initialTreatments = [{ treatmentName: '', amount: '' }];
 const expenseCategories = ['Rent', 'Assistant Salary', 'IMAGE IMA Fees', 'Purchase Items', 'Other'];
 
 const styles = {
-  page: {
-    minHeight: '100vh',
-    background: 'linear-gradient(135deg, #e2e8f0, #dbeafe)',
-    padding: '40px 20px',
-    fontFamily: 'Inter, Segoe UI, Arial, sans-serif',
-    color: '#1e293b',
-  },
-  card: {
-    maxWidth: 1100,
-    margin: '0 auto',
-    background: '#ffffff',
-    borderRadius: 18,
-    boxShadow: '0 20px 45px rgba(2, 132, 199, 0.12)',
-    padding: 28,
-    border: '1px solid #e2e8f0',
-  },
-  headerBrand: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  headerLogo: {
-    width: 54,
-    height: 54,
-    borderRadius: 12,
-    objectFit: 'contain',
-    background: '#0f172a',
-    border: '1px solid #334155',
-    padding: 4,
-  },
+  page: { minHeight: '100vh', background: 'linear-gradient(135deg, #e2e8f0, #dbeafe)', padding: '40px 20px', fontFamily: 'Inter, Segoe UI, Arial, sans-serif', color: '#1e293b' },
+  card: { maxWidth: 1100, margin: '0 auto', background: '#ffffff', borderRadius: 18, boxShadow: '0 20px 45px rgba(2, 132, 199, 0.12)', padding: 28, border: '1px solid #e2e8f0' },
+  headerBrand: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, textAlign: 'center', marginBottom: 16 },
+  headerLogo: { width: 54, height: 54, borderRadius: 12, objectFit: 'contain', background: '#0f172a', border: '1px solid #334155', padding: 4 },
   tabRow: { display: 'flex', gap: 10, marginBottom: 22, flexWrap: 'wrap' },
-  tabBtn: {
-    background: '#f8fafc',
-    border: '1px solid #cbd5e1',
-    color: '#1e293b',
-    borderRadius: 999,
-    padding: '10px 14px',
-    cursor: 'pointer',
-    fontWeight: 600,
-  },
-  tabBtnActive: {
-    background: '#0284c7',
-    border: '1px solid #0284c7',
-    color: '#ffffff',
-  },
+  tabBtn: { background: '#f8fafc', border: '1px solid #cbd5e1', color: '#1e293b', borderRadius: 999, padding: '10px 14px', cursor: 'pointer', fontWeight: 600 },
+  tabBtnActive: { background: '#0284c7', border: '1px solid #0284c7', color: '#ffffff' },
   title: { margin: 0, fontSize: 28, fontWeight: 700 },
   subtitle: { margin: '8px 0 24px', color: '#64748b' },
   row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
   label: { fontSize: 13, fontWeight: 600, marginBottom: 8, display: 'block' },
-  input: {
-    width: '100%',
-    border: '1px solid #cbd5e1',
-    borderRadius: 12,
-    padding: '11px 12px',
-    fontSize: 14,
-    outline: 'none',
-    boxSizing: 'border-box',
-    background: '#ffffff',
-    color: '#0f172a',
-    caretColor: '#0f172a',
-    WebkitTextFillColor: '#0f172a',
-    colorScheme: 'light',
-  },
+  input: { width: '100%', border: '1px solid #cbd5e1', borderRadius: 12, padding: '11px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box', background: '#ffffff', color: '#0f172a', caretColor: '#0f172a', WebkitTextFillColor: '#0f172a', colorScheme: 'light' },
   sectionTitle: { fontSize: 17, marginTop: 24, marginBottom: 10 },
-  treatmentCard: {
-    background: '#f8fafc',
-    border: '1px solid #e2e8f0',
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 10,
-  },
-  treatmentRow: {
-    display: 'grid',
-    gridTemplateColumns: '1.8fr 1fr auto',
-    gap: 10,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  addBtn: {
-    background: '#f0f9ff',
-    color: '#0369a1',
-    border: '1px solid #bae6fd',
-    padding: '9px 14px',
-    borderRadius: 10,
-    cursor: 'pointer',
-    fontWeight: 600,
-  },
-  deleteBtn: {
-    background: '#fff1f2',
-    color: '#be123c',
-    border: '1px solid #fecdd3',
-    padding: '9px 10px',
-    borderRadius: 10,
-    cursor: 'pointer',
-  },
-  submitBtn: {
-    marginTop: 20,
-    width: '100%',
-    background: '#0284c7',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 12,
-    padding: '12px 16px',
-    fontSize: 15,
-    fontWeight: 700,
-    cursor: 'pointer',
-  },
-  total: {
-    marginTop: 14,
-    padding: 14,
-    background: '#ffffff',
-    border: '1px solid #e2e8f0',
-    borderRadius: 12,
-    textAlign: 'right',
-    fontWeight: 700,
-    color: '#0284c7',
-  },
+  treatmentCard: { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 16, padding: 16, marginTop: 10 },
+  treatmentRow: { display: 'grid', gridTemplateColumns: '1.8fr 1fr auto', gap: 10, marginBottom: 10, alignItems: 'center' },
+  addBtn: { background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd', padding: '9px 14px', borderRadius: 10, cursor: 'pointer', fontWeight: 600 },
+  deleteBtn: { background: '#fff1f2', color: '#be123c', border: '1px solid #fecdd3', padding: '9px 10px', borderRadius: 10, cursor: 'pointer' },
+  submitBtn: { marginTop: 20, width: '100%', background: '#0284c7', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 16px', fontSize: 15, fontWeight: 700, cursor: 'pointer' },
+  total: { marginTop: 14, padding: 14, background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12, textAlign: 'right', fontWeight: 700, color: '#0284c7' },
   previewHeader: { marginBottom: 14, fontSize: 24 },
   iframe: { width: '100%', height: 550, border: '1px solid #dbeafe', borderRadius: 14 },
   actions: { display: 'flex', gap: 12, marginTop: 16 },
-  secondaryBtn: {
-    flex: 1,
-    background: '#f8fafc',
-    color: '#0f172a',
-    border: '1px solid #cbd5e1',
-    borderRadius: 10,
-    padding: '11px 12px',
-    fontWeight: 600,
-    cursor: 'pointer',
-  },
-  whatsappBtn: {
-    flex: 1,
-    background: '#16a34a',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 10,
-    padding: '11px 12px',
-    fontWeight: 700,
-    cursor: 'pointer',
-  },
+  secondaryBtn: { flex: 1, background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: 10, padding: '11px 12px', fontWeight: 600, cursor: 'pointer' },
+  whatsappBtn: { flex: 1, background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 12px', fontWeight: 700, cursor: 'pointer' },
   expenseGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 },
-  expenseSummary: {
-    margin: '16px 0',
-    background: '#ecfeff',
-    border: '1px solid #bae6fd',
-    padding: 14,
-    borderRadius: 12,
-    color: '#0369a1',
-    fontWeight: 700,
-  },
-  expenseTable: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    marginTop: 8,
-    border: '1px solid #e2e8f0',
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  th: {
-    textAlign: 'left',
-    padding: '10px 8px',
-    fontSize: 13,
-    color: '#475569',
-    borderBottom: '1px solid #e2e8f0',
-    background: '#f8fafc',
-  },
+  expenseSummary: { margin: '16px 0', background: '#ecfeff', border: '1px solid #bae6fd', padding: 14, borderRadius: 12, color: '#0369a1', fontWeight: 700 },
+  expenseTable: { width: '100%', borderCollapse: 'collapse', marginTop: 8, border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden' },
+  th: { textAlign: 'left', padding: '10px 8px', fontSize: 13, color: '#475569', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' },
   td: { padding: '10px 8px', fontSize: 14, borderBottom: '1px solid #f1f5f9' },
   kpiGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(180px, 1fr))', gap: 12, marginBottom: 16 },
   kpiCard: { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14 },
@@ -186,12 +44,10 @@ const styles = {
   chartTitle: { margin: '0 0 10px', fontSize: 16, color: '#0f172a' },
 };
 
-const formatINR = (value) =>
-  `₹ ${Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-
+const formatINR = (value) => `₹ ${Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 const getToday = () => new Date().toISOString().slice(0, 10);
 
-const formatPeriodLabel = (period, view) => {
+const periodLabel = (period, view) => {
   if (view === 'daily') return Number(String(period).slice(-2));
   const [y, m] = String(period).split('-').map(Number);
   return new Date(y, m - 1, 1).toLocaleString('en-IN', { month: 'short' });
@@ -199,24 +55,23 @@ const formatPeriodLabel = (period, view) => {
 
 const hoverSummary = (item) => {
   if (!item.details?.length) return 'No customer/treatment data for this period.';
-  return item.details
-    .slice(0, 4)
-    .map((entry) => `${entry.patientName}: ${entry.treatments}`)
-    .join(' | ');
+  return item.details.slice(0, 4).map((entry) => `${entry.patientName}: ${entry.treatments}`).join(' | ');
 };
 
-function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000, view, onBarClick }) {
+function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000, view, onBarClick, onBack }) {
   const values = data.map((item) => Number(item[valueKey] || 0));
   const yMax = Math.max(yBaseMax, Math.max(...values, 0));
-
   const chartHeight = 210;
   const chartWidth = Math.max(data.length * 22, 620);
-  const barWidth = 12;
-  const gap = 10;
 
   return (
     <div style={styles.chartCard}>
       <h3 style={styles.chartTitle}>{title}</h3>
+      {view === 'daily' && (
+        <button type="button" style={{ ...styles.secondaryBtn, marginBottom: 8 }} onClick={onBack}>
+          ← Back to Month View
+        </button>
+      )}
       {!data.length && <p style={styles.subtitle}>No data available yet.</p>}
       {!!data.length && (
         <div style={{ overflowX: 'auto' }}>
@@ -229,9 +84,7 @@ function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000, view,
               return (
                 <g key={`${title}-${tick}`}>
                   <line x1="55" y1={y} x2={chartWidth + 60} y2={y} stroke="#e2e8f0" />
-                  <text x="50" y={y + 4} textAnchor="end" fill="#64748b" fontSize="11">
-                    {formatter(Math.round(tick))}
-                  </text>
+                  <text x="50" y={y + 4} textAnchor="end" fill="#64748b" fontSize="11">{formatter(Math.round(tick))}</text>
                 </g>
               );
             })}
@@ -239,14 +92,14 @@ function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000, view,
             {data.map((item, index) => {
               const value = Number(item[valueKey] || 0);
               const barHeight = yMax > 0 ? (value / yMax) * chartHeight : 0;
-              const x = 60 + index * (barWidth + gap);
+              const x = 60 + index * 22;
               const y = chartHeight + 10 - barHeight;
               return (
                 <g key={`${title}-${item.period}`}>
                   <rect
                     x={x}
                     y={y}
-                    width={barWidth}
+                    width={12}
                     height={barHeight}
                     fill="#0284c7"
                     rx="3"
@@ -255,9 +108,7 @@ function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000, view,
                   >
                     <title>{hoverSummary(item)}</title>
                   </rect>
-                  <text x={x + barWidth / 2} y={chartHeight + 25} textAnchor="middle" fill="#64748b" fontSize="10">
-                    {formatPeriodLabel(item.period, view)}
-                  </text>
+                  <text x={x + 6} y={chartHeight + 25} textAnchor="middle" fill="#64748b" fontSize="10">{periodLabel(item.period, view)}</text>
                 </g>
               );
             })}
@@ -288,15 +139,17 @@ function App() {
   const [expenseTotal, setExpenseTotal] = useState(0);
 
   const [dashboardLoading, setDashboardLoading] = useState(false);
-  const [dashboardSeries, setDashboardSeries] = useState([]);
+  const [monthlySeries, setMonthlySeries] = useState([]);
+  const [dailyByMonth, setDailyByMonth] = useState({});
   const [dashboardTotals, setDashboardTotals] = useState({ revenue: 0, invoicesSent: 0, repeatingCustomers: 0 });
-  const [dashboardMonth, setDashboardMonth] = useState('');
-  const [dashboardView, setDashboardView] = useState('monthly');
+  const [dashboardYear, setDashboardYear] = useState(new Date().getFullYear());
+  const [chartState, setChartState] = useState({
+    revenue: { view: 'monthly', month: '' },
+    invoicesSent: { view: 'monthly', month: '' },
+    repeatingCustomers: { view: 'monthly', month: '' },
+  });
 
-  const total = useMemo(
-    () => treatments.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0),
-    [treatments],
-  );
+  const total = useMemo(() => treatments.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0), [treatments]);
 
   const fetchExpenses = async () => {
     try {
@@ -310,17 +163,21 @@ function App() {
     }
   };
 
-  const fetchDashboard = async (view = 'monthly', month = '') => {
+  const fetchMonthlyDashboard = async () => {
     setDashboardLoading(true);
     try {
-      const query = view === 'daily' && month ? `?view=daily&month=${month}` : '?view=monthly';
-      const response = await fetch(`${API_BASE}/api/dashboard${query}`);
+      const year = new Date().getFullYear();
+      const response = await fetch(`${API_BASE}/api/dashboard?view=monthly&year=${year}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Could not fetch dashboard data');
-      setDashboardSeries(data.series || []);
+      setMonthlySeries(data.series || []);
       setDashboardTotals(data.totals || { revenue: 0, invoicesSent: 0, repeatingCustomers: 0 });
-      setDashboardMonth(data.month || '');
-      setDashboardView(data.view || view);
+      setDashboardYear(data.year || year);
+      setChartState({
+        revenue: { view: 'monthly', month: '' },
+        invoicesSent: { view: 'monthly', month: '' },
+        repeatingCustomers: { view: 'monthly', month: '' },
+      });
     } catch (error) {
       alert(`Could not load dashboard. Check backend/MySQL.\n\nError: ${error.message}`);
     } finally {
@@ -328,20 +185,44 @@ function App() {
     }
   };
 
+  const fetchDailyForMonth = async (month) => {
+    if (dailyByMonth[month]) return;
+    try {
+      const response = await fetch(`${API_BASE}/api/dashboard?view=daily&month=${month}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Could not fetch daily breakdown');
+      setDailyByMonth((prev) => ({ ...prev, [month]: data.series || [] }));
+    } catch (error) {
+      alert(`Could not load daily breakdown.\n\nError: ${error.message}`);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'expenses') fetchExpenses();
-    if (activeTab === 'dashboard') fetchDashboard('monthly');
+    if (activeTab === 'dashboard') fetchMonthlyDashboard();
   }, [activeTab]);
+
+  const setChartToDaily = async (key, month) => {
+    await fetchDailyForMonth(month);
+    setChartState((prev) => ({ ...prev, [key]: { view: 'daily', month } }));
+  };
+
+  const setChartToMonthly = (key) => {
+    setChartState((prev) => ({ ...prev, [key]: { view: 'monthly', month: '' } }));
+  };
+
+  const chartData = (key) => {
+    const state = chartState[key];
+    if (state.view === 'daily' && state.month) return dailyByMonth[state.month] || [];
+    return monthlySeries;
+  };
 
   const updateTreatment = (index, key, value) => {
     setTreatments((prev) => prev.map((item, i) => (i === index ? { ...item, [key]: value } : item)));
   };
 
   const addRow = () => setTreatments((prev) => [...prev, { treatmentName: '', amount: '' }]);
-
-  const deleteRow = (index) => {
-    setTreatments((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
-  };
+  const deleteRow = (index) => setTreatments((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
 
   const resetBillingForm = () => {
     setPatientName('');
@@ -353,19 +234,13 @@ function App() {
 
   const submitInvoice = async (e) => {
     e.preventDefault();
-    if (!patientName.trim() || !phoneNumber.trim()) {
-      alert('Please enter patient name and WhatsApp number.');
-      return;
-    }
+    if (!patientName.trim() || !phoneNumber.trim()) return alert('Please enter patient name and WhatsApp number.');
 
     const cleanTreatments = treatments
       .map((t) => ({ treatment_name: t.treatmentName.trim(), amount: Number(t.amount) }))
       .filter((t) => t.treatment_name && !Number.isNaN(t.amount) && t.amount >= 0);
 
-    if (!cleanTreatments.length) {
-      alert('Please add at least one valid treatment with amount.');
-      return;
-    }
+    if (!cleanTreatments.length) return alert('Please add at least one valid treatment with amount.');
 
     setLoading(true);
     try {
@@ -377,11 +252,9 @@ function App() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Unable to generate bill');
       setPdfUrl(data.pdfUrl);
-      fetchDashboard('monthly');
+      fetchMonthlyDashboard();
     } catch (error) {
-      alert(
-        `Unable to generate invoice. Please confirm backend server and MySQL are running.\n\nError: ${error.message}`,
-      );
+      alert(`Unable to generate invoice. Please confirm backend server and MySQL are running.\n\nError: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -390,25 +263,17 @@ function App() {
   const submitExpense = async (e) => {
     e.preventDefault();
     if (!expenseDate || !expenseCategory || !expenseDescription.trim() || Number(expenseAmount) < 0) {
-      alert('Please enter valid expense date, category, description and amount.');
-      return;
+      return alert('Please enter valid expense date, category, description and amount.');
     }
 
     setExpenseLoading(true);
     try {
       const response = await fetch(`${API_BASE}/api/expenses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          expenseDate,
-          category: expenseCategory,
-          description: expenseDescription,
-          amount: Number(expenseAmount),
-        }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expenseDate, category: expenseCategory, description: expenseDescription, amount: Number(expenseAmount) }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Unable to save expense');
-
       setExpenseDescription('');
       setExpenseAmount('');
       await fetchExpenses();
@@ -422,74 +287,41 @@ function App() {
   const sendWhatsApp = () => {
     const cleanedPhone = phoneNumber.replace(/\D/g, '').replace(/^91/, '');
     const message = `Hi ${patientName}, your dental treatment receipt is ready. You can view/download it here: ${pdfUrl}\n\nRegards, Vamis Dental Care.`;
-    const waUrl = `https://wa.me/91${cleanedPhone}?text=${encodeURIComponent(message)}`;
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
+    window.open(`https://wa.me/91${cleanedPhone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
   };
 
   return (
     <div style={styles.page}>
       <div style={styles.card}>
         <div style={styles.headerBrand}>
-          {logoVisible && (
-            <img src={LOGO_SRC} alt="Vamis Dental Care" style={styles.headerLogo} onError={() => setLogoVisible(false)} />
-          )}
+          {logoVisible && <img src={LOGO_SRC} alt="Vamis Dental Care" style={styles.headerLogo} onError={() => setLogoVisible(false)} />}
           <h1 style={{ ...styles.title, fontSize: 22 }}>Vamis Dental Care</h1>
           <p style={{ ...styles.subtitle, margin: '4px 0 0' }}>Billing, Expenses & Analytics Dashboard</p>
         </div>
 
         <div style={styles.tabRow}>
-          <button
-            type="button"
-            style={{ ...styles.tabBtn, ...(activeTab === 'dashboard' ? styles.tabBtnActive : {}) }}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            Dashboard
-          </button>
-          <button
-            type="button"
-            style={{ ...styles.tabBtn, ...(activeTab === 'billing' ? styles.tabBtnActive : {}) }}
-            onClick={() => setActiveTab('billing')}
-          >
-            Billing & PDF
-          </button>
-          <button
-            type="button"
-            style={{ ...styles.tabBtn, ...(activeTab === 'expenses' ? styles.tabBtnActive : {}) }}
-            onClick={() => setActiveTab('expenses')}
-          >
-            Clinic Expenses
-          </button>
+          {['dashboard', 'billing', 'expenses'].map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              style={{ ...styles.tabBtn, ...(activeTab === tab ? styles.tabBtnActive : {}) }}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === 'dashboard' ? 'Dashboard' : tab === 'billing' ? 'Billing & PDF' : 'Clinic Expenses'}
+            </button>
+          ))}
         </div>
 
         {activeTab === 'dashboard' && (
           <>
             <h2 style={styles.previewHeader}>Dashboard Analytics</h2>
-            <p style={styles.subtitle}>
-              Monthly bar charts are shown first. Click a month bar to view daily breakdown on the same graph.
-            </p>
-            <p style={{ ...styles.subtitle, marginTop: -12 }}>
-              View: {dashboardView === 'monthly' ? 'Monthly' : `Daily (${dashboardMonth})`}
-            </p>
-
-            {dashboardView === 'daily' && (
-              <button type="button" style={styles.secondaryBtn} onClick={() => fetchDashboard('monthly')}>
-                ← Back to Monthly View
-              </button>
-            )}
+            <p style={styles.subtitle}>Monthly bars show January to December. Click any bar to drill down into days for that graph only.</p>
+            <p style={{ ...styles.subtitle, marginTop: -12 }}>Year: {dashboardYear}</p>
 
             <div style={styles.kpiGrid}>
-              <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Amount Received</div>
-                <div style={styles.kpiValue}>{formatINR(dashboardTotals.revenue)}</div>
-              </div>
-              <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Invoices Sent</div>
-                <div style={styles.kpiValue}>{dashboardTotals.invoicesSent}</div>
-              </div>
-              <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Repeating Customers</div>
-                <div style={styles.kpiValue}>{dashboardTotals.repeatingCustomers}</div>
-              </div>
+              <div style={styles.kpiCard}><div style={styles.kpiLabel}>Amount Received</div><div style={styles.kpiValue}>{formatINR(dashboardTotals.revenue)}</div></div>
+              <div style={styles.kpiCard}><div style={styles.kpiLabel}>Invoices Sent</div><div style={styles.kpiValue}>{dashboardTotals.invoicesSent}</div></div>
+              <div style={styles.kpiCard}><div style={styles.kpiLabel}>Repeating Customers</div><div style={styles.kpiValue}>{dashboardTotals.repeatingCustomers}</div></div>
             </div>
 
             {dashboardLoading ? (
@@ -497,31 +329,34 @@ function App() {
             ) : (
               <div style={styles.chartGrid}>
                 <AxisBarChart
-                  title={dashboardView === 'monthly' ? 'Monthly Amount Received' : 'Daily Amount Received'}
-                  data={dashboardSeries}
+                  title={chartState.revenue.view === 'monthly' ? 'Monthly Amount Received' : `Daily Amount Received (${chartState.revenue.month})`}
+                  data={chartData('revenue')}
                   valueKey="revenue"
                   formatter={formatINR}
                   yBaseMax={2000}
-                  view={dashboardView}
-                  onBarClick={(item) => dashboardView === 'monthly' && fetchDashboard('daily', item.period)}
+                  view={chartState.revenue.view}
+                  onBarClick={(item) => chartState.revenue.view === 'monthly' && setChartToDaily('revenue', item.period)}
+                  onBack={() => setChartToMonthly('revenue')}
                 />
                 <AxisBarChart
-                  title={dashboardView === 'monthly' ? 'Monthly Invoices Sent' : 'Daily Invoices Sent'}
-                  data={dashboardSeries}
+                  title={chartState.invoicesSent.view === 'monthly' ? 'Monthly Invoices Sent' : `Daily Invoices Sent (${chartState.invoicesSent.month})`}
+                  data={chartData('invoicesSent')}
                   valueKey="invoicesSent"
                   formatter={(value) => value}
                   yBaseMax={2000}
-                  view={dashboardView}
-                  onBarClick={(item) => dashboardView === 'monthly' && fetchDashboard('daily', item.period)}
+                  view={chartState.invoicesSent.view}
+                  onBarClick={(item) => chartState.invoicesSent.view === 'monthly' && setChartToDaily('invoicesSent', item.period)}
+                  onBack={() => setChartToMonthly('invoicesSent')}
                 />
                 <AxisBarChart
-                  title={dashboardView === 'monthly' ? 'Monthly Repeating Customers' : 'Daily Repeating Customers'}
-                  data={dashboardSeries}
+                  title={chartState.repeatingCustomers.view === 'monthly' ? 'Monthly Repeating Customers' : `Daily Repeating Customers (${chartState.repeatingCustomers.month})`}
+                  data={chartData('repeatingCustomers')}
                   valueKey="repeatingCustomers"
                   formatter={(value) => value}
                   yBaseMax={2000}
-                  view={dashboardView}
-                  onBarClick={(item) => dashboardView === 'monthly' && fetchDashboard('daily', item.period)}
+                  view={chartState.repeatingCustomers.view}
+                  onBarClick={(item) => chartState.repeatingCustomers.view === 'monthly' && setChartToDaily('repeatingCustomers', item.period)}
+                  onBack={() => setChartToMonthly('repeatingCustomers')}
                 />
               </div>
             )}
@@ -534,71 +369,24 @@ function App() {
               <>
                 <h2 style={styles.previewHeader}>Dental Billing MVP</h2>
                 <p style={styles.subtitle}>Create a treatment invoice, preview PDF, and share via WhatsApp.</p>
-
                 <form onSubmit={submitInvoice}>
                   <div style={styles.row}>
-                    <div>
-                      <label style={styles.label}>Patient Name</label>
-                      <input
-                        style={styles.input}
-                        placeholder="Enter patient name"
-                        value={patientName}
-                        onChange={(e) => setPatientName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label style={styles.label}>WhatsApp Number</label>
-                      <input
-                        style={styles.input}
-                        placeholder="e.g. 9876543210"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        required
-                      />
-                    </div>
+                    <div><label style={styles.label}>Patient Name</label><input style={styles.input} value={patientName} onChange={(e) => setPatientName(e.target.value)} required /></div>
+                    <div><label style={styles.label}>WhatsApp Number</label><input style={styles.input} value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required /></div>
                   </div>
-
                   <div style={styles.treatmentCard}>
                     <h3 style={{ ...styles.sectionTitle, marginTop: 0 }}>Treatments &amp; Services</h3>
                     {treatments.map((item, index) => (
                       <div key={index} style={styles.treatmentRow}>
-                        <input
-                          style={styles.input}
-                          placeholder="Treatment Name"
-                          value={item.treatmentName}
-                          onChange={(e) => updateTreatment(index, 'treatmentName', e.target.value)}
-                        />
-                        <input
-                          style={styles.input}
-                          placeholder="Amount"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.amount}
-                          onChange={(e) => updateTreatment(index, 'amount', e.target.value)}
-                        />
-                        <button
-                          style={styles.deleteBtn}
-                          type="button"
-                          onClick={() => deleteRow(index)}
-                          disabled={treatments.length === 1}
-                          title={treatments.length === 1 ? 'At least one row is required' : 'Delete row'}
-                        >
-                          Delete
-                        </button>
+                        <input style={styles.input} placeholder="Treatment Name" value={item.treatmentName} onChange={(e) => updateTreatment(index, 'treatmentName', e.target.value)} />
+                        <input style={styles.input} placeholder="Amount" type="number" min="0" step="0.01" value={item.amount} onChange={(e) => updateTreatment(index, 'amount', e.target.value)} />
+                        <button style={styles.deleteBtn} type="button" onClick={() => deleteRow(index)} disabled={treatments.length === 1}>Delete</button>
                       </div>
                     ))}
-
-                    <button type="button" style={styles.addBtn} onClick={addRow}>
-                      + Add Treatment
-                    </button>
+                    <button type="button" style={styles.addBtn} onClick={addRow}>+ Add Treatment</button>
                     <div style={styles.total}>Live Total: {formatINR(total)}</div>
                   </div>
-
-                  <button style={styles.submitBtn} type="submit" disabled={loading}>
-                    {loading ? 'Generating...' : 'Preview Invoice'}
-                  </button>
+                  <button style={styles.submitBtn} type="submit" disabled={loading}>{loading ? 'Generating...' : 'Preview Invoice'}</button>
                 </form>
               </>
             ) : (
@@ -606,12 +394,8 @@ function App() {
                 <h2 style={styles.previewHeader}>Document Preview</h2>
                 <iframe title="Invoice Preview" src={pdfUrl} style={styles.iframe} />
                 <div style={styles.actions}>
-                  <button type="button" style={styles.secondaryBtn} onClick={resetBillingForm}>
-                    ← Back / Create New
-                  </button>
-                  <button type="button" style={styles.whatsappBtn} onClick={sendWhatsApp}>
-                    Send via WhatsApp
-                  </button>
+                  <button type="button" style={styles.secondaryBtn} onClick={resetBillingForm}>← Back / Create New</button>
+                  <button type="button" style={styles.whatsappBtn} onClick={sendWhatsApp}>Send via WhatsApp</button>
                 </div>
               </>
             )}
@@ -621,94 +405,22 @@ function App() {
         {activeTab === 'expenses' && (
           <>
             <h2 style={styles.previewHeader}>Clinic Expense Tracker</h2>
-            <p style={styles.subtitle}>
-              Track rent, assistant salary, IMAGE IMA fees, purchase items, and other expenses.
-            </p>
-
+            <p style={styles.subtitle}>Track rent, assistant salary, IMAGE IMA fees, purchase items, and other expenses.</p>
             <form onSubmit={submitExpense}>
               <div style={styles.expenseGrid}>
-                <div>
-                  <label style={styles.label}>Expense Date</label>
-                  <input
-                    type="date"
-                    style={styles.input}
-                    value={expenseDate}
-                    onChange={(e) => setExpenseDate(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label style={styles.label}>Category</label>
-                  <select
-                    style={styles.input}
-                    value={expenseCategory}
-                    onChange={(e) => setExpenseCategory(e.target.value)}
-                    required
-                  >
-                    {expenseCategories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label style={styles.label}>Description</label>
-                  <input
-                    style={styles.input}
-                    placeholder="e.g. Monthly clinic rent"
-                    value={expenseDescription}
-                    onChange={(e) => setExpenseDescription(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label style={styles.label}>Amount</label>
-                  <input
-                    style={styles.input}
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={expenseAmount}
-                    onChange={(e) => setExpenseAmount(e.target.value)}
-                    required
-                  />
-                </div>
+                <div><label style={styles.label}>Expense Date</label><input type="date" style={styles.input} value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} required /></div>
+                <div><label style={styles.label}>Category</label><select style={styles.input} value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} required>{expenseCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></div>
+                <div><label style={styles.label}>Description</label><input style={styles.input} value={expenseDescription} onChange={(e) => setExpenseDescription(e.target.value)} required /></div>
+                <div><label style={styles.label}>Amount</label><input style={styles.input} type="number" min="0" step="0.01" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} required /></div>
               </div>
-
-              <button style={styles.submitBtn} type="submit" disabled={expenseLoading}>
-                {expenseLoading ? 'Saving...' : 'Save Expense'}
-              </button>
+              <button style={styles.submitBtn} type="submit" disabled={expenseLoading}>{expenseLoading ? 'Saving...' : 'Save Expense'}</button>
             </form>
-
             <div style={styles.expenseSummary}>Total Tracked Expenses: {formatINR(expenseTotal)}</div>
-
             <table style={styles.expenseTable}>
-              <thead>
-                <tr>
-                  <th style={styles.th}>Date</th>
-                  <th style={styles.th}>Category</th>
-                  <th style={styles.th}>Description</th>
-                  <th style={styles.th}>Amount</th>
-                </tr>
-              </thead>
+              <thead><tr><th style={styles.th}>Date</th><th style={styles.th}>Category</th><th style={styles.th}>Description</th><th style={styles.th}>Amount</th></tr></thead>
               <tbody>
-                {!expenseList.length && (
-                  <tr>
-                    <td style={styles.td} colSpan={4}>
-                      No expenses tracked yet.
-                    </td>
-                  </tr>
-                )}
-                {expenseList.map((expense) => (
-                  <tr key={expense.id}>
-                    <td style={styles.td}>{new Date(expense.expense_date).toLocaleDateString('en-IN')}</td>
-                    <td style={styles.td}>{expense.category}</td>
-                    <td style={styles.td}>{expense.description}</td>
-                    <td style={styles.td}>{formatINR(expense.amount)}</td>
-                  </tr>
-                ))}
+                {!expenseList.length && <tr><td style={styles.td} colSpan={4}>No expenses tracked yet.</td></tr>}
+                {expenseList.map((expense) => <tr key={expense.id}><td style={styles.td}>{new Date(expense.expense_date).toLocaleDateString('en-IN')}</td><td style={styles.td}>{expense.category}</td><td style={styles.td}>{expense.description}</td><td style={styles.td}>{formatINR(expense.amount)}</td></tr>)}
               </tbody>
             </table>
           </>
