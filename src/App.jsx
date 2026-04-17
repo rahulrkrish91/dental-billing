@@ -198,7 +198,7 @@ const getToday = () => new Date().toISOString().slice(0, 10);
 
 const formatMonth = (monthKey) => {
   const [y, m] = monthKey.split('-').map(Number);
-  return new Date(y, m - 1, 1).toLocaleString('en-IN', { month: 'short', year: '2-digit' });
+  return new Date(y, m - 1, 1).toLocaleString('en-IN', { month: 'short', year: 'numeric' });
 };
 
 function MiniBarChart({ title, data, valueKey, formatter }) {
@@ -418,7 +418,8 @@ function App() {
         {activeTab === 'dashboard' && (
           <>
             <h2 style={styles.previewHeader}>Dashboard Analytics</h2>
-            <p style={styles.subtitle}>Graph view for amount received, repeating customers, and invoices sent.</p>
+            <p style={styles.subtitle}>Graph view for amount received, repeating customers, and invoices sent (month-year buckets, e.g. Apr 2026).</p>
+            <p style={{ ...styles.subtitle, marginTop: -12 }}>Last updated: {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
 
             <div style={styles.kpiGrid}>
               <div style={styles.kpiCard}>
