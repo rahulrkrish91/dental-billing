@@ -49,6 +49,10 @@ const styles = {
     outline: 'none',
     boxSizing: 'border-box',
     background: '#ffffff',
+    color: '#0f172a',
+    caretColor: '#0f172a',
+    WebkitTextFillColor: '#0f172a',
+    colorScheme: 'light',
   },
   sectionTitle: { fontSize: 17, marginTop: 24, marginBottom: 10 },
   treatmentRow: {
