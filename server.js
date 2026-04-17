@@ -435,6 +435,29 @@ app.get('/api/dashboard', async (req, res) => {
         [startDate, endDate],
       );
 
+      const [expenseRows] = await pool.execute(
+        `SELECT
+          DATE_FORMAT(expense_date, '%Y-%m') AS period_key,
+          SUM(amount) AS clinic_expenses
+        FROM Expenses
+        WHERE expense_date BETWEEN ? AND ?
+        GROUP BY period_key
+        ORDER BY period_key ASC`,
+        [startDate, endDate],
+      );
+
+      const [expenseDetailRows] = await pool.execute(
+        `SELECT
+          DATE_FORMAT(expense_date, '%Y-%m') AS period_key,
+          category,
+          description,
+          amount
+        FROM Expenses
+        WHERE expense_date BETWEEN ? AND ?
+        ORDER BY expense_date DESC, id DESC`,
+        [startDate, endDate],
+      );
+
       const [detailRows] = await pool.execute(
         `SELECT
           DATE_FORMAT(i.created_at, '%Y-%m') AS period_key,
@@ -458,6 +481,7 @@ app.get('/api/dashboard', async (req, res) => {
           revenue: 0,
           invoicesSent: 0,
           repeatingCustomers: 0,
+          clinicExpenses: 0,
           details: [],
         });
       }
@@ -475,11 +499,26 @@ app.get('/api/dashboard', async (req, res) => {
         }
       });
 
+      expenseRows.forEach((row) => {
+        if (periodMap.has(row.period_key)) {
+          periodMap.get(row.period_key).clinicExpenses = Number(row.clinic_expenses || 0);
+        }
+      });
+
       detailRows.forEach((row) => {
         if (periodMap.has(row.period_key)) {
           periodMap.get(row.period_key).details.push({
-            patientName: row.patient_name,
-            treatments: row.treatments || 'No treatments recorded',
+            label: row.patient_name,
+            description: row.treatments || 'No treatments recorded',
+          });
+        }
+      });
+
+      expenseDetailRows.forEach((row) => {
+        if (periodMap.has(row.period_key)) {
+          periodMap.get(row.period_key).details.push({
+            label: `Expense - ${row.category}`,
+            description: `${row.description} (${row.amount})`,
           });
         }
       });
@@ -490,9 +529,10 @@ app.get('/api/dashboard', async (req, res) => {
           acc.revenue += item.revenue;
           acc.invoicesSent += item.invoicesSent;
           acc.repeatingCustomers += item.repeatingCustomers;
+          acc.clinicExpenses += item.clinicExpenses;
           return acc;
         },
-        { revenue: 0, invoicesSent: 0, repeatingCustomers: 0 },
+        { revenue: 0, invoicesSent: 0, repeatingCustomers: 0, clinicExpenses: 0 },
       );
 
       return res.json({
@@ -544,6 +584,29 @@ app.get('/api/dashboard', async (req, res) => {
       [startDate, endDate],
     );
 
+    const [expenseRows] = await pool.execute(
+      `SELECT
+        expense_date AS period_key,
+        SUM(amount) AS clinic_expenses
+      FROM Expenses
+      WHERE expense_date BETWEEN ? AND ?
+      GROUP BY period_key
+      ORDER BY period_key ASC`,
+      [startDate, endDate],
+    );
+
+    const [expenseDetailRows] = await pool.execute(
+      `SELECT
+        expense_date AS period_key,
+        category,
+        description,
+        amount
+      FROM Expenses
+      WHERE expense_date BETWEEN ? AND ?
+      ORDER BY expense_date DESC, id DESC`,
+      [startDate, endDate],
+    );
+
     const [detailRows] = await pool.execute(
       `SELECT
         DATE(i.created_at) AS period_key,
@@ -569,6 +632,7 @@ app.get('/api/dashboard', async (req, res) => {
         revenue: 0,
         invoicesSent: 0,
         repeatingCustomers: 0,
+        clinicExpenses: 0,
         details: [],
       });
     }
@@ -588,12 +652,29 @@ app.get('/api/dashboard', async (req, res) => {
       }
     });
 
+    expenseRows.forEach((row) => {
+      const dayKey = new Date(row.period_key).toISOString().slice(0, 10);
+      if (dayMap.has(dayKey)) {
+        dayMap.get(dayKey).clinicExpenses = Number(row.clinic_expenses || 0);
+      }
+    });
+
     detailRows.forEach((row) => {
       const dayKey = new Date(row.period_key).toISOString().slice(0, 10);
       if (dayMap.has(dayKey)) {
         dayMap.get(dayKey).details.push({
-          patientName: row.patient_name,
-          treatments: row.treatments || 'No treatments recorded',
+          label: row.patient_name,
+          description: row.treatments || 'No treatments recorded',
+        });
+      }
+    });
+
+    expenseDetailRows.forEach((row) => {
+      const dayKey = new Date(row.period_key).toISOString().slice(0, 10);
+      if (dayMap.has(dayKey)) {
+        dayMap.get(dayKey).details.push({
+          label: `Expense - ${row.category}`,
+          description: `${row.description} (${row.amount})`,
         });
       }
     });
@@ -604,9 +685,10 @@ app.get('/api/dashboard', async (req, res) => {
         acc.revenue += item.revenue;
         acc.invoicesSent += item.invoicesSent;
         acc.repeatingCustomers += item.repeatingCustomers;
+        acc.clinicExpenses += item.clinicExpenses;
         return acc;
       },
-      { revenue: 0, invoicesSent: 0, repeatingCustomers: 0 },
+      { revenue: 0, invoicesSent: 0, repeatingCustomers: 0, clinicExpenses: 0 },
     );
 
     return res.json({

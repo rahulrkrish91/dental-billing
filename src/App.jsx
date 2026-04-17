@@ -55,10 +55,10 @@ const periodLabel = (period, view) => {
 
 const hoverSummary = (item) => {
   if (!item.details?.length) return 'No customer/treatment data for this period.';
-  return item.details.slice(0, 4).map((entry) => `${entry.patientName}: ${entry.treatments}`).join(' | ');
+  return item.details.slice(0, 4).map((entry) => `${entry.label || '-'}: ${entry.description || '-'}`).join(' | ');
 };
 
-function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000, view, onBarClick, onBack }) {
+function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000, view, onBarClick, onBack, selectedItem, onViewDetails }) {
   const values = data.map((item) => Number(item[valueKey] || 0));
   const yMax = Math.max(yBaseMax, Math.max(...values, 0));
   const chartHeight = 210;
@@ -72,6 +72,14 @@ function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000, view,
           ← Back to Month View
         </button>
       )}
+      <button
+        type="button"
+        style={{ ...styles.secondaryBtn, marginBottom: 8 }}
+        disabled={!selectedItem}
+        onClick={onViewDetails}
+      >
+        View Details Info
+      </button>
       {!data.length && <p style={styles.subtitle}>No data available yet.</p>}
       {!!data.length && (
         <div style={{ overflowX: 'auto' }}>
@@ -141,13 +149,23 @@ function App() {
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [monthlySeries, setMonthlySeries] = useState([]);
   const [dailyByMonth, setDailyByMonth] = useState({});
-  const [dashboardTotals, setDashboardTotals] = useState({ revenue: 0, invoicesSent: 0, repeatingCustomers: 0 });
+  const [dashboardTotals, setDashboardTotals] = useState({ revenue: 0, invoicesSent: 0, repeatingCustomers: 0, clinicExpenses: 0 });
   const [dashboardYear, setDashboardYear] = useState(new Date().getFullYear());
   const [chartState, setChartState] = useState({
     revenue: { view: 'monthly', month: '' },
     invoicesSent: { view: 'monthly', month: '' },
     repeatingCustomers: { view: 'monthly', month: '' },
+    clinicExpenses: { view: 'monthly', month: '' },
   });
+
+
+  const [selectedBars, setSelectedBars] = useState({
+    revenue: null,
+    invoicesSent: null,
+    repeatingCustomers: null,
+    clinicExpenses: null,
+  });
+  const [detailsPage, setDetailsPage] = useState(null);
 
   const total = useMemo(() => treatments.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0), [treatments]);
 
@@ -171,12 +189,13 @@ function App() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Could not fetch dashboard data');
       setMonthlySeries(data.series || []);
-      setDashboardTotals(data.totals || { revenue: 0, invoicesSent: 0, repeatingCustomers: 0 });
+      setDashboardTotals(data.totals || { revenue: 0, invoicesSent: 0, repeatingCustomers: 0, clinicExpenses: 0 });
       setDashboardYear(data.year || year);
       setChartState({
         revenue: { view: 'monthly', month: '' },
         invoicesSent: { view: 'monthly', month: '' },
         repeatingCustomers: { view: 'monthly', month: '' },
+        clinicExpenses: { view: 'monthly', month: '' },
       });
     } catch (error) {
       alert(`Could not load dashboard. Check backend/MySQL.\n\nError: ${error.message}`);
@@ -215,6 +234,25 @@ function App() {
     const state = chartState[key];
     if (state.view === 'daily' && state.month) return dailyByMonth[state.month] || [];
     return monthlySeries;
+  };
+
+
+  const handleChartBarClick = async (key, item) => {
+    setSelectedBars((prev) => ({ ...prev, [key]: item }));
+    if (chartState[key].view === 'monthly') {
+      await setChartToDaily(key, item.period);
+    }
+  };
+
+  const openDetailsPage = (key, title) => {
+    const selected = selectedBars[key];
+    if (!selected) return;
+    setDetailsPage({
+      title,
+      period: selected.period,
+      details: selected.details || [],
+    });
+    setActiveTab('details');
   };
 
   const updateTreatment = (index, key, value) => {
@@ -322,6 +360,7 @@ function App() {
               <div style={styles.kpiCard}><div style={styles.kpiLabel}>Amount Received</div><div style={styles.kpiValue}>{formatINR(dashboardTotals.revenue)}</div></div>
               <div style={styles.kpiCard}><div style={styles.kpiLabel}>Invoices Sent</div><div style={styles.kpiValue}>{dashboardTotals.invoicesSent}</div></div>
               <div style={styles.kpiCard}><div style={styles.kpiLabel}>Repeating Customers</div><div style={styles.kpiValue}>{dashboardTotals.repeatingCustomers}</div></div>
+              <div style={styles.kpiCard}><div style={styles.kpiLabel}>Clinic Expenses</div><div style={styles.kpiValue}>{formatINR(dashboardTotals.clinicExpenses)}</div></div>
             </div>
 
             {dashboardLoading ? (
@@ -335,8 +374,10 @@ function App() {
                   formatter={formatINR}
                   yBaseMax={2000}
                   view={chartState.revenue.view}
-                  onBarClick={(item) => chartState.revenue.view === 'monthly' && setChartToDaily('revenue', item.period)}
+                  onBarClick={(item) => handleChartBarClick('revenue', item)}
                   onBack={() => setChartToMonthly('revenue')}
+                  selectedItem={selectedBars.revenue}
+                  onViewDetails={() => openDetailsPage('revenue', 'Amount Received')}
                 />
                 <AxisBarChart
                   title={chartState.invoicesSent.view === 'monthly' ? 'Monthly Invoices Sent' : `Daily Invoices Sent (${chartState.invoicesSent.month})`}
@@ -345,8 +386,10 @@ function App() {
                   formatter={(value) => value}
                   yBaseMax={2000}
                   view={chartState.invoicesSent.view}
-                  onBarClick={(item) => chartState.invoicesSent.view === 'monthly' && setChartToDaily('invoicesSent', item.period)}
+                  onBarClick={(item) => handleChartBarClick('invoicesSent', item)}
                   onBack={() => setChartToMonthly('invoicesSent')}
+                  selectedItem={selectedBars.invoicesSent}
+                  onViewDetails={() => openDetailsPage('invoicesSent', 'Invoices Sent')}
                 />
                 <AxisBarChart
                   title={chartState.repeatingCustomers.view === 'monthly' ? 'Monthly Repeating Customers' : `Daily Repeating Customers (${chartState.repeatingCustomers.month})`}
@@ -355,11 +398,58 @@ function App() {
                   formatter={(value) => value}
                   yBaseMax={2000}
                   view={chartState.repeatingCustomers.view}
-                  onBarClick={(item) => chartState.repeatingCustomers.view === 'monthly' && setChartToDaily('repeatingCustomers', item.period)}
+                  onBarClick={(item) => handleChartBarClick('repeatingCustomers', item)}
                   onBack={() => setChartToMonthly('repeatingCustomers')}
+                  selectedItem={selectedBars.repeatingCustomers}
+                  onViewDetails={() => openDetailsPage('repeatingCustomers', 'Repeating Customers')}
+                />
+
+                <AxisBarChart
+                  title={chartState.clinicExpenses.view === 'monthly' ? 'Monthly Clinic Expenses' : `Daily Clinic Expenses (${chartState.clinicExpenses.month})`}
+                  data={chartData('clinicExpenses')}
+                  valueKey="clinicExpenses"
+                  formatter={formatINR}
+                  yBaseMax={2000}
+                  view={chartState.clinicExpenses.view}
+                  onBarClick={(item) => handleChartBarClick('clinicExpenses', item)}
+                  onBack={() => setChartToMonthly('clinicExpenses')}
+                  selectedItem={selectedBars.clinicExpenses}
+                  onViewDetails={() => openDetailsPage('clinicExpenses', 'Clinic Expenses')}
                 />
               </div>
             )}
+          </>
+        )}
+
+
+        {activeTab === 'details' && detailsPage && (
+          <>
+            <h2 style={styles.previewHeader}>{detailsPage.title} - Details</h2>
+            <p style={styles.subtitle}>Selected period: {detailsPage.period}</p>
+            <button type="button" style={{ ...styles.secondaryBtn, maxWidth: 260 }} onClick={() => setActiveTab('dashboard')}>
+              ← Back to Dashboard
+            </button>
+            <table style={styles.expenseTable}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Label</th>
+                  <th style={styles.th}>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {!detailsPage.details.length && (
+                  <tr>
+                    <td style={styles.td} colSpan={2}>No details available for this item.</td>
+                  </tr>
+                )}
+                {detailsPage.details.map((item, index) => (
+                  <tr key={`${item.label}-${index}`}>
+                    <td style={styles.td}>{item.label || '-'}</td>
+                    <td style={styles.td}>{item.description || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </>
         )}
 
