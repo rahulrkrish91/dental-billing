@@ -196,31 +196,58 @@ const formatINR = (value) =>
 
 const getToday = () => new Date().toISOString().slice(0, 10);
 
-const formatMonth = (monthKey) => {
-  const [y, m] = monthKey.split('-').map(Number);
-  return new Date(y, m - 1, 1).toLocaleString('en-IN', { month: 'short', year: 'numeric' });
-};
+const formatDay = (dateKey) => Number(String(dateKey).slice(-2));
 
-function MiniBarChart({ title, data, valueKey, formatter }) {
-  const max = Math.max(...data.map((item) => Number(item[valueKey] || 0)), 1);
+function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000 }) {
+  const values = data.map((item) => Number(item[valueKey] || 0));
+  const peakValue = Math.max(...values, 0);
+  const yMax = Math.max(yBaseMax, peakValue);
+
+  const chartHeight = 210;
+  const chartWidth = Math.max(data.length * 22, 620);
+  const barWidth = 12;
+  const gap = 10;
 
   return (
     <div style={styles.chartCard}>
       <h3 style={styles.chartTitle}>{title}</h3>
       {!data.length && <p style={styles.subtitle}>No data available yet.</p>}
-      {data.map((item) => {
-        const value = Number(item[valueKey] || 0);
-        const width = `${Math.max((value / max) * 100, value > 0 ? 6 : 0)}%`;
-        return (
-          <div style={styles.chartRow} key={`${title}-${item.month}`}>
-            <span>{formatMonth(item.month)}</span>
-            <div style={styles.chartTrack}>
-              <div style={{ ...styles.chartFill, width }} />
-            </div>
-            <strong style={{ textAlign: 'right' }}>{formatter(value)}</strong>
-          </div>
-        );
-      })}
+      {!!data.length && (
+        <div style={{ overflowX: 'auto' }}>
+          <svg width={chartWidth + 80} height={chartHeight + 56} role="img" aria-label={title}>
+            <line x1="55" y1={chartHeight + 10} x2={chartWidth + 60} y2={chartHeight + 10} stroke="#94a3b8" />
+            <line x1="55" y1="10" x2="55" y2={chartHeight + 10} stroke="#94a3b8" />
+
+            {[0, yMax / 2, yMax].map((tick) => {
+              const y = chartHeight + 10 - (tick / yMax) * chartHeight;
+              return (
+                <g key={`${title}-tick-${tick}`}>
+                  <line x1="55" y1={y} x2={chartWidth + 60} y2={y} stroke="#e2e8f0" />
+                  <text x="50" y={y + 4} textAnchor="end" fill="#64748b" fontSize="11">
+                    {formatter(Math.round(tick))}
+                  </text>
+                </g>
+              );
+            })}
+
+            {data.map((item, index) => {
+              const value = Number(item[valueKey] || 0);
+              const barHeight = yMax > 0 ? (value / yMax) * chartHeight : 0;
+              const x = 60 + index * (barWidth + gap);
+              const y = chartHeight + 10 - barHeight;
+              return (
+                <g key={`${title}-${item.date}`}>
+                  <rect x={x} y={y} width={barWidth} height={barHeight} fill="#0284c7" rx="3" />
+                  <text x={x + barWidth / 2} y={chartHeight + 25} textAnchor="middle" fill="#64748b" fontSize="10">
+                    {formatDay(item.date)}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      )}
+      <p style={{ ...styles.subtitle, marginTop: 8 }}>Y-axis range: 0 to {formatter(Math.round(yMax))}</p>
     </div>
   );
 }
@@ -246,6 +273,7 @@ function App() {
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardSeries, setDashboardSeries] = useState([]);
   const [dashboardTotals, setDashboardTotals] = useState({ revenue: 0, invoicesSent: 0, repeatingCustomers: 0 });
+  const [dashboardMonth, setDashboardMonth] = useState('');
 
   const total = useMemo(
     () => treatments.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0),
@@ -267,11 +295,12 @@ function App() {
   const fetchDashboard = async () => {
     setDashboardLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/api/dashboard?months=6`);
+      const response = await fetch(`${API_BASE}/api/dashboard`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Could not fetch dashboard data');
       setDashboardSeries(data.series || []);
       setDashboardTotals(data.totals || { revenue: 0, invoicesSent: 0, repeatingCustomers: 0 });
+      setDashboardMonth(data.month || '');
     } catch (error) {
       alert(`Could not load dashboard. Check backend/MySQL.\n\nError: ${error.message}`);
     } finally {
@@ -418,20 +447,20 @@ function App() {
         {activeTab === 'dashboard' && (
           <>
             <h2 style={styles.previewHeader}>Dashboard Analytics</h2>
-            <p style={styles.subtitle}>Graph view for amount received, repeating customers, and invoices sent (month-year buckets, e.g. Apr 2026).</p>
-            <p style={{ ...styles.subtitle, marginTop: -12 }}>Last updated: {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+            <p style={styles.subtitle}>Daily bar charts for amount received, invoices sent, and repeating customers.</p>
+            <p style={{ ...styles.subtitle, marginTop: -12 }}>Month: {dashboardMonth || new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
 
             <div style={styles.kpiGrid}>
               <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Amount Received (6 months)</div>
+                <div style={styles.kpiLabel}>Amount Received (Current Month)</div>
                 <div style={styles.kpiValue}>{formatINR(dashboardTotals.revenue)}</div>
               </div>
               <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Invoices Sent (6 months)</div>
+                <div style={styles.kpiLabel}>Invoices Sent (Current Month)</div>
                 <div style={styles.kpiValue}>{dashboardTotals.invoicesSent}</div>
               </div>
               <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Repeating Customers (6 months)</div>
+                <div style={styles.kpiLabel}>Repeating Customers (Current Month)</div>
                 <div style={styles.kpiValue}>{dashboardTotals.repeatingCustomers}</div>
               </div>
             </div>
@@ -440,23 +469,26 @@ function App() {
               <p style={styles.subtitle}>Loading charts...</p>
             ) : (
               <div style={styles.chartGrid}>
-                <MiniBarChart
-                  title="Monthly Amount Received"
+                <AxisBarChart
+                  title="Daily Amount Received"
                   data={dashboardSeries}
                   valueKey="revenue"
                   formatter={formatINR}
+                  yBaseMax={2000}
                 />
-                <MiniBarChart
-                  title="Monthly Invoices Sent"
+                <AxisBarChart
+                  title="Daily Invoices Sent"
                   data={dashboardSeries}
                   valueKey="invoicesSent"
                   formatter={(value) => value}
+                  yBaseMax={2000}
                 />
-                <MiniBarChart
-                  title="Monthly Repeating Customers"
+                <AxisBarChart
+                  title="Daily Repeating Customers"
                   data={dashboardSeries}
                   valueKey="repeatingCustomers"
                   formatter={(value) => value}
+                  yBaseMax={2000}
                 />
               </div>
             )}

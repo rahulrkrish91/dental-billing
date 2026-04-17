@@ -395,63 +395,82 @@ app.post('/api/expenses', async (req, res) => {
 
 
 app.get('/api/dashboard', async (req, res) => {
-  const months = Math.min(Math.max(Number(req.query.months) || 6, 3), 24);
+  const monthParam = String(req.query.month || '').trim();
+
+  const now = new Date();
+  const monthMatch = monthParam.match(/^(\d{4})-(\d{2})$/);
+
+  const year = monthMatch ? Number(monthMatch[1]) : now.getFullYear();
+  const monthIndex = monthMatch ? Number(monthMatch[2]) - 1 : now.getMonth();
+
+  const periodEnd = new Date(year, monthIndex + 1, 0);
+  const monthString = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+
+  const startDate = `${monthString}-01`;
+  const endDate = `${monthString}-${String(periodEnd.getDate()).padStart(2, '0')}`;
 
   try {
-    const [monthlyRows] = await pool.execute(
+    const [dailyRows] = await pool.execute(
       `SELECT
-        DATE_FORMAT(created_at, '%Y-%m') AS month_key,
+        DATE(created_at) AS day_key,
         SUM(total_amount) AS revenue,
-        COUNT(*) AS invoices_sent,
-        COUNT(DISTINCT patient_id) AS unique_patients
+        COUNT(*) AS invoices_sent
       FROM Invoices
-      WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
-      GROUP BY month_key
-      ORDER BY month_key ASC`,
-      [months],
+      WHERE DATE(created_at) BETWEEN ? AND ?
+      GROUP BY day_key
+      ORDER BY day_key ASC`,
+      [startDate, endDate],
     );
 
     const [repeatingRows] = await pool.execute(
       `SELECT
-        DATE_FORMAT(i.created_at, '%Y-%m') AS month_key,
+        DATE(i.created_at) AS day_key,
         COUNT(DISTINCT i.patient_id) AS repeating_customers
       FROM Invoices i
-      WHERE i.created_at >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+      WHERE DATE(i.created_at) BETWEEN ? AND ?
         AND EXISTS (
           SELECT 1
           FROM Invoices prev
           WHERE prev.patient_id = i.patient_id
-            AND prev.created_at < DATE_FORMAT(i.created_at, '%Y-%m-01')
+            AND DATE(prev.created_at) < DATE(i.created_at)
         )
-      GROUP BY month_key
-      ORDER BY month_key ASC`,
-      [months],
+      GROUP BY day_key
+      ORDER BY day_key ASC`,
+      [startDate, endDate],
     );
 
-    const monthMap = new Map();
-    monthlyRows.forEach((row) => {
-      monthMap.set(row.month_key, {
-        month: row.month_key,
-        revenue: Number(row.revenue || 0),
-        invoicesSent: Number(row.invoices_sent || 0),
+    const daysInMonth = periodEnd.getDate();
+    const dayMap = new Map();
+
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const dayKey = `${monthString}-${String(day).padStart(2, '0')}`;
+      dayMap.set(dayKey, {
+        day,
+        date: dayKey,
+        revenue: 0,
+        invoicesSent: 0,
         repeatingCustomers: 0,
       });
-    });
+    }
 
-    repeatingRows.forEach((row) => {
-      if (!monthMap.has(row.month_key)) {
-        monthMap.set(row.month_key, {
-          month: row.month_key,
-          revenue: 0,
-          invoicesSent: 0,
-          repeatingCustomers: Number(row.repeating_customers || 0),
-        });
-      } else {
-        monthMap.get(row.month_key).repeatingCustomers = Number(row.repeating_customers || 0);
+    dailyRows.forEach((row) => {
+      const dayKey = new Date(row.day_key).toISOString().slice(0, 10);
+      if (dayMap.has(dayKey)) {
+        const item = dayMap.get(dayKey);
+        item.revenue = Number(row.revenue || 0);
+        item.invoicesSent = Number(row.invoices_sent || 0);
       }
     });
 
-    const series = [...monthMap.values()];
+    repeatingRows.forEach((row) => {
+      const dayKey = new Date(row.day_key).toISOString().slice(0, 10);
+      if (dayMap.has(dayKey)) {
+        dayMap.get(dayKey).repeatingCustomers = Number(row.repeating_customers || 0);
+      }
+    });
+
+    const series = [...dayMap.values()];
+
     const totals = series.reduce(
       (acc, item) => {
         acc.revenue += item.revenue;
@@ -464,7 +483,8 @@ app.get('/api/dashboard', async (req, res) => {
 
     return res.json({
       success: true,
-      months,
+      month: monthString,
+      yAxisBaseMax: 2000,
       totals,
       series,
     });
