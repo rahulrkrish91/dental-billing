@@ -24,8 +24,11 @@ const styles = {
   },
   headerBrand: {
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'center',
+    gap: 10,
+    textAlign: 'center',
     marginBottom: 16,
   },
   headerLogo: {
@@ -125,12 +128,7 @@ const styles = {
     color: '#0284c7',
   },
   previewHeader: { marginBottom: 14, fontSize: 24 },
-  iframe: {
-    width: '100%',
-    height: 550,
-    border: '1px solid #dbeafe',
-    borderRadius: 14,
-  },
+  iframe: { width: '100%', height: 550, border: '1px solid #dbeafe', borderRadius: 14 },
   actions: { display: 'flex', gap: 12, marginTop: 16 },
   secondaryBtn: {
     flex: 1,
@@ -186,9 +184,6 @@ const styles = {
   chartGrid: { display: 'grid', gridTemplateColumns: '1fr', gap: 14 },
   chartCard: { background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14 },
   chartTitle: { margin: '0 0 10px', fontSize: 16, color: '#0f172a' },
-  chartRow: { display: 'grid', gridTemplateColumns: '90px 1fr 90px', gap: 10, alignItems: 'center', marginBottom: 8 },
-  chartTrack: { width: '100%', background: '#e2e8f0', borderRadius: 999, height: 10, overflow: 'hidden' },
-  chartFill: { height: '100%', background: '#0284c7', borderRadius: 999 },
 };
 
 const formatINR = (value) =>
@@ -196,12 +191,23 @@ const formatINR = (value) =>
 
 const getToday = () => new Date().toISOString().slice(0, 10);
 
-const formatDay = (dateKey) => Number(String(dateKey).slice(-2));
+const formatPeriodLabel = (period, view) => {
+  if (view === 'daily') return Number(String(period).slice(-2));
+  const [y, m] = String(period).split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleString('en-IN', { month: 'short' });
+};
 
-function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000 }) {
+const hoverSummary = (item) => {
+  if (!item.details?.length) return 'No customer/treatment data for this period.';
+  return item.details
+    .slice(0, 4)
+    .map((entry) => `${entry.patientName}: ${entry.treatments}`)
+    .join(' | ');
+};
+
+function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000, view, onBarClick }) {
   const values = data.map((item) => Number(item[valueKey] || 0));
-  const peakValue = Math.max(...values, 0);
-  const yMax = Math.max(yBaseMax, peakValue);
+  const yMax = Math.max(yBaseMax, Math.max(...values, 0));
 
   const chartHeight = 210;
   const chartWidth = Math.max(data.length * 22, 620);
@@ -221,7 +227,7 @@ function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000 }) {
             {[0, yMax / 2, yMax].map((tick) => {
               const y = chartHeight + 10 - (tick / yMax) * chartHeight;
               return (
-                <g key={`${title}-tick-${tick}`}>
+                <g key={`${title}-${tick}`}>
                   <line x1="55" y1={y} x2={chartWidth + 60} y2={y} stroke="#e2e8f0" />
                   <text x="50" y={y + 4} textAnchor="end" fill="#64748b" fontSize="11">
                     {formatter(Math.round(tick))}
@@ -236,10 +242,21 @@ function AxisBarChart({ title, data, valueKey, formatter, yBaseMax = 2000 }) {
               const x = 60 + index * (barWidth + gap);
               const y = chartHeight + 10 - barHeight;
               return (
-                <g key={`${title}-${item.date}`}>
-                  <rect x={x} y={y} width={barWidth} height={barHeight} fill="#0284c7" rx="3" />
+                <g key={`${title}-${item.period}`}>
+                  <rect
+                    x={x}
+                    y={y}
+                    width={barWidth}
+                    height={barHeight}
+                    fill="#0284c7"
+                    rx="3"
+                    style={{ cursor: view === 'monthly' ? 'pointer' : 'default' }}
+                    onClick={() => onBarClick?.(item)}
+                  >
+                    <title>{hoverSummary(item)}</title>
+                  </rect>
                   <text x={x + barWidth / 2} y={chartHeight + 25} textAnchor="middle" fill="#64748b" fontSize="10">
-                    {formatDay(item.date)}
+                    {formatPeriodLabel(item.period, view)}
                   </text>
                 </g>
               );
@@ -274,6 +291,7 @@ function App() {
   const [dashboardSeries, setDashboardSeries] = useState([]);
   const [dashboardTotals, setDashboardTotals] = useState({ revenue: 0, invoicesSent: 0, repeatingCustomers: 0 });
   const [dashboardMonth, setDashboardMonth] = useState('');
+  const [dashboardView, setDashboardView] = useState('monthly');
 
   const total = useMemo(
     () => treatments.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0),
@@ -292,15 +310,17 @@ function App() {
     }
   };
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = async (view = 'monthly', month = '') => {
     setDashboardLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/api/dashboard`);
+      const query = view === 'daily' && month ? `?view=daily&month=${month}` : '?view=monthly';
+      const response = await fetch(`${API_BASE}/api/dashboard${query}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Could not fetch dashboard data');
       setDashboardSeries(data.series || []);
       setDashboardTotals(data.totals || { revenue: 0, invoicesSent: 0, repeatingCustomers: 0 });
       setDashboardMonth(data.month || '');
+      setDashboardView(data.view || view);
     } catch (error) {
       alert(`Could not load dashboard. Check backend/MySQL.\n\nError: ${error.message}`);
     } finally {
@@ -310,7 +330,7 @@ function App() {
 
   useEffect(() => {
     if (activeTab === 'expenses') fetchExpenses();
-    if (activeTab === 'dashboard') fetchDashboard();
+    if (activeTab === 'dashboard') fetchDashboard('monthly');
   }, [activeTab]);
 
   const updateTreatment = (index, key, value) => {
@@ -333,7 +353,6 @@ function App() {
 
   const submitInvoice = async (e) => {
     e.preventDefault();
-
     if (!patientName.trim() || !phoneNumber.trim()) {
       alert('Please enter patient name and WhatsApp number.');
       return;
@@ -349,7 +368,6 @@ function App() {
     }
 
     setLoading(true);
-
     try {
       const response = await fetch(`${API_BASE}/api/generate-bill`, {
         method: 'POST',
@@ -359,7 +377,7 @@ function App() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Unable to generate bill');
       setPdfUrl(data.pdfUrl);
-      fetchDashboard();
+      fetchDashboard('monthly');
     } catch (error) {
       alert(
         `Unable to generate invoice. Please confirm backend server and MySQL are running.\n\nError: ${error.message}`,
@@ -371,7 +389,6 @@ function App() {
 
   const submitExpense = async (e) => {
     e.preventDefault();
-
     if (!expenseDate || !expenseCategory || !expenseDescription.trim() || Number(expenseAmount) < 0) {
       alert('Please enter valid expense date, category, description and amount.');
       return;
@@ -413,11 +430,11 @@ function App() {
     <div style={styles.page}>
       <div style={styles.card}>
         <div style={styles.headerBrand}>
-          {logoVisible && <img src={LOGO_SRC} alt="Vamis Dental Care" style={styles.headerLogo} onError={() => setLogoVisible(false)} />}
-          <div>
-            <h1 style={{ ...styles.title, fontSize: 22 }}>Vamis Dental Care</h1>
-            <p style={{ ...styles.subtitle, margin: '4px 0 0' }}>Billing, Expenses & Analytics Dashboard</p>
-          </div>
+          {logoVisible && (
+            <img src={LOGO_SRC} alt="Vamis Dental Care" style={styles.headerLogo} onError={() => setLogoVisible(false)} />
+          )}
+          <h1 style={{ ...styles.title, fontSize: 22 }}>Vamis Dental Care</h1>
+          <p style={{ ...styles.subtitle, margin: '4px 0 0' }}>Billing, Expenses & Analytics Dashboard</p>
         </div>
 
         <div style={styles.tabRow}>
@@ -447,20 +464,30 @@ function App() {
         {activeTab === 'dashboard' && (
           <>
             <h2 style={styles.previewHeader}>Dashboard Analytics</h2>
-            <p style={styles.subtitle}>Daily bar charts for amount received, invoices sent, and repeating customers.</p>
-            <p style={{ ...styles.subtitle, marginTop: -12 }}>Month: {dashboardMonth || new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
+            <p style={styles.subtitle}>
+              Monthly bar charts are shown first. Click a month bar to view daily breakdown on the same graph.
+            </p>
+            <p style={{ ...styles.subtitle, marginTop: -12 }}>
+              View: {dashboardView === 'monthly' ? 'Monthly' : `Daily (${dashboardMonth})`}
+            </p>
+
+            {dashboardView === 'daily' && (
+              <button type="button" style={styles.secondaryBtn} onClick={() => fetchDashboard('monthly')}>
+                ← Back to Monthly View
+              </button>
+            )}
 
             <div style={styles.kpiGrid}>
               <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Amount Received (Current Month)</div>
+                <div style={styles.kpiLabel}>Amount Received</div>
                 <div style={styles.kpiValue}>{formatINR(dashboardTotals.revenue)}</div>
               </div>
               <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Invoices Sent (Current Month)</div>
+                <div style={styles.kpiLabel}>Invoices Sent</div>
                 <div style={styles.kpiValue}>{dashboardTotals.invoicesSent}</div>
               </div>
               <div style={styles.kpiCard}>
-                <div style={styles.kpiLabel}>Repeating Customers (Current Month)</div>
+                <div style={styles.kpiLabel}>Repeating Customers</div>
                 <div style={styles.kpiValue}>{dashboardTotals.repeatingCustomers}</div>
               </div>
             </div>
@@ -470,25 +497,31 @@ function App() {
             ) : (
               <div style={styles.chartGrid}>
                 <AxisBarChart
-                  title="Daily Amount Received"
+                  title={dashboardView === 'monthly' ? 'Monthly Amount Received' : 'Daily Amount Received'}
                   data={dashboardSeries}
                   valueKey="revenue"
                   formatter={formatINR}
                   yBaseMax={2000}
+                  view={dashboardView}
+                  onBarClick={(item) => dashboardView === 'monthly' && fetchDashboard('daily', item.period)}
                 />
                 <AxisBarChart
-                  title="Daily Invoices Sent"
+                  title={dashboardView === 'monthly' ? 'Monthly Invoices Sent' : 'Daily Invoices Sent'}
                   data={dashboardSeries}
                   valueKey="invoicesSent"
                   formatter={(value) => value}
                   yBaseMax={2000}
+                  view={dashboardView}
+                  onBarClick={(item) => dashboardView === 'monthly' && fetchDashboard('daily', item.period)}
                 />
                 <AxisBarChart
-                  title="Daily Repeating Customers"
+                  title={dashboardView === 'monthly' ? 'Monthly Repeating Customers' : 'Daily Repeating Customers'}
                   data={dashboardSeries}
                   valueKey="repeatingCustomers"
                   formatter={(value) => value}
                   yBaseMax={2000}
+                  view={dashboardView}
+                  onBarClick={(item) => dashboardView === 'monthly' && fetchDashboard('daily', item.period)}
                 />
               </div>
             )}
@@ -528,7 +561,6 @@ function App() {
 
                   <div style={styles.treatmentCard}>
                     <h3 style={{ ...styles.sectionTitle, marginTop: 0 }}>Treatments &amp; Services</h3>
-
                     {treatments.map((item, index) => (
                       <div key={index} style={styles.treatmentRow}>
                         <input
@@ -561,7 +593,6 @@ function App() {
                     <button type="button" style={styles.addBtn} onClick={addRow}>
                       + Add Treatment
                     </button>
-
                     <div style={styles.total}>Live Total: {formatINR(total)}</div>
                   </div>
 
@@ -606,7 +637,6 @@ function App() {
                     required
                   />
                 </div>
-
                 <div>
                   <label style={styles.label}>Category</label>
                   <select
@@ -622,7 +652,6 @@ function App() {
                     ))}
                   </select>
                 </div>
-
                 <div>
                   <label style={styles.label}>Description</label>
                   <input
@@ -633,7 +662,6 @@ function App() {
                     required
                   />
                 </div>
-
                 <div>
                   <label style={styles.label}>Amount</label>
                   <input
